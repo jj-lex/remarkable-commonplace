@@ -17,7 +17,7 @@ Inside the Commonplace notebook you also get:
 - **Index** — every card you've made, newest first, with one tap to the card or back to the passage in the book.
 - **Open p. N ↗** — on any card, jumps back to the page it came from.
 
-On your Mac, the **sync** turns every notecard into a note in your Obsidian vault — passage text, title, author, page, capture time, your handwriting (as an image and as text), topics, and a link that opens the book at that page — plus a page per book and per topic. It runs every 15 minutes in the background, entirely on your Mac (handwriting and topics use Apple's on-device models). See [docs/SYNC.md](docs/SYNC.md).
+On your Mac, the **sync** turns every notecard into a note in your Obsidian vault — passage text, title, author, page, capture time, your handwriting (as an image and as text), topics, and a link that opens the book at that page — plus a page per book and per topic. It runs every 15 minutes in the background. Handwriting and topics use Apple's on-device models by default, so nothing leaves your Mac — or plug in your own model (Claude, OpenAI, Grok, OpenRouter, Ollama, anything OpenAI-compatible) with one setting. See [docs/SYNC.md](docs/SYNC.md#bring-your-own-model).
 
 ## Status
 

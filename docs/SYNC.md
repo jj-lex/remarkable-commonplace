@@ -21,8 +21,10 @@ Write anything you like below the line `%% Everything above this line is updated
 ## How the pieces work
 
 - **Passage text** is read from the book file inside the area you captured (the mod logs it). No OCR needed for EPUBs and text PDFs. Scanned PDFs show "picture only".
-- **Handwriting** is recognized with Apple's on-device Vision text recognition. Approximate for messy writing; the image is always there too.
-- **Topics** come from Apple's on-device language model (macOS 26+, Apple silicon, Apple Intelligence on). 1–3 per notecard, reusing existing topics where they fit. Small model, so expect the odd miss — edit the note's `topics` property and it sticks.
+- **Handwriting** is read by Apple's on-device Vision text recognition by default. Approximate for messy writing; the image is always there too. A vision LLM (Claude, GPT, Grok…) does much better — see *Bring your own model*.
+- **Topics** come from Apple's on-device language model by default (macOS 26+, Apple silicon, Apple Intelligence on). 1–3 per notecard, reusing existing topics where they fit. Small model, so expect the odd miss — swap in a bigger model, or edit the note's `topics` property and it sticks.
+
+Only these two steps use AI. Everything else — pulling from the tablet, passage text, book details, notes and pages — is ordinary code.
 - **Health**: if the tablet fully restarted, the sync switches the mod back on. You get one notification if Wi-Fi SSH starts accepting passwords again (firmware updates do this) or if the tablet hasn't been reachable for 3 days.
 
 ## Install
@@ -45,6 +47,63 @@ Nothing to do. Read, capture, write — notes appear in your vault within 15 min
 - Run now: `launchctl kickstart -k gui/$(id -u)/com.github.commonplace.sync`
 - Stop: `./scripts/uninstall-sync.sh`
 
+## Bring your own model
+
+Topics and handwriting each use a *provider*, set separately in your settings file. The default is `apple` (on device, free, private). Swap either one for a hosted or local model:
+
+| `provider` | What it is | Needs |
+|---|---|---|
+| `apple` | Apple's on-device model + Vision (default) | macOS 26, Apple silicon, Apple Intelligence on |
+| `anthropic` | Claude, via the official Anthropic SDK | API key; default model `claude-opus-5-5`, low effort |
+| `openai` | OpenAI | API key, `"model"` |
+| `xai` | xAI (Grok) | API key, `"model"` |
+| `openrouter` | OpenRouter (hundreds of models) | API key, `"model"` |
+| `ollama` | Local models via Ollama | Ollama running, `"model"` |
+| `openai-compatible` | Anything that speaks the OpenAI chat format (Groq, Together, LM Studio, vLLM…) | `"base_url"`, `"model"`, usually a key |
+| `none` | Skip this step | — |
+
+Examples — Claude reads handwriting, Apple keeps doing topics:
+
+```json
+"ai": {
+  "topics":      { "provider": "apple" },
+  "handwriting": { "provider": "anthropic" }
+}
+```
+
+Grok for both:
+
+```json
+"ai": {
+  "topics":      { "provider": "xai", "model": "<model name from xAI's docs>" },
+  "handwriting": { "provider": "xai", "model": "<a vision-capable model>" }
+}
+```
+
+A local model through Ollama (no key, nothing leaves your Mac):
+
+```json
+"ai": { "topics": { "provider": "ollama", "model": "<a model you've pulled>" } }
+```
+
+Model names change often, so apart from Claude none is assumed — use the name from your provider's docs. For handwriting, pick a model that accepts images.
+
+**API keys** are never stored in the settings file. The sync looks for an environment variable (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `XAI_API_KEY`, `OPENROUTER_API_KEY`), then macOS Keychain. The background job doesn't see your shell's environment, so Keychain is the reliable place:
+
+```bash
+security add-generic-password -a "$USER" -s commonplace-anthropic -w   # prompts for the key
+security add-generic-password -a "$USER" -s commonplace-openai -w
+security add-generic-password -a "$USER" -s commonplace-xai -w
+```
+
+Use a different Keychain entry or variable with `"api_key_keychain"` / `"api_key_env"`.
+
+**Privacy:** with a hosted provider, the passage text (topics) or your handwriting image (handwriting) is sent to that provider. The default `apple` provider sends nothing anywhere.
+
+If a provider is misconfigured or unreachable, the sync logs why and skips that step for the run — notes still sync.
+
+**Adding a provider:** implement `complete(system, prompt, max_tokens)` and `read_image(png, prompt)` in `sync/commonplace_sync/providers.py` and register it in `make()`. Prompts and clean-up live in `ai.py` and are shared by every provider.
+
 ## Settings
 
 `~/Library/Application Support/Commonplace/config.json`:
@@ -55,7 +114,11 @@ Nothing to do. Read, capture, write — notes appear in your vault within 15 min
   "hosts": ["remarkable-wifi", "remarkable"],
   "wifi_host": "remarkable-wifi",
   "recent_days": 14,
-  "unreachable_alert_days": 3
+  "unreachable_alert_days": 3,
+  "ai": {
+    "topics":      { "provider": "apple" },
+    "handwriting": { "provider": "apple" }
+  }
 }
 ```
 

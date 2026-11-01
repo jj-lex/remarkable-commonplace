@@ -1,6 +1,5 @@
 """Call the on-device Apple helper (Vision text recognition, Apple's language model)."""
 import json
-import re
 import subprocess
 from pathlib import Path
 
@@ -27,39 +26,15 @@ def read_handwriting(png: Path) -> str:
     return r.stdout.strip() if r.returncode == 0 else ""
 
 
-# words the model sometimes returns about the task itself rather than the excerpt
-NOT_TOPICS = {"passage", "passages", "excerpt", "theme", "themes", "topic", "topics", "subject", "subjects",
-              "book", "books", "text", "quote", "quotation", "reader", "note", "chapter", "story", "literature",
-              "writing", "narrative", "idea", "ideas", "none", "n/a"}
 
-
-def _norm(t: str) -> str:
-    t = re.sub(r"[^a-z0-9 &'-]", "", t.lower()).strip()
-    return " ".join(t.split()[:3])
-
-
-def topics(passage: str, note: str, existing: list[str]) -> list[str]:
-    """1-3 topics from Apple's on-device model; reuses existing topics when they match."""
+def generate(system: str, prompt: str) -> str:
+    """Apple's on-device language model (macOS 26+, Apple Intelligence on)."""
     h = helper()
-    if not h or not (passage or note):
-        return []
-    existing = [e for e in existing if e not in NOT_TOPICS]
-    payload = json.dumps({"passage": passage[:3000], "note": note[:1000], "existing": existing[:200]})
+    if not h:
+        return ""
+    payload = json.dumps({"system": system, "prompt": prompt})
     try:
-        r = subprocess.run([str(h), "topics"], input=payload, capture_output=True, text=True, timeout=90)
+        r = subprocess.run([str(h), "generate"], input=payload, capture_output=True, text=True, timeout=90)
     except subprocess.TimeoutExpired:
-        return []
-    if r.returncode != 0:
-        return []
-    by_key = {}
-    for e in existing:
-        by_key.setdefault(e.lower().rstrip("s"), e)
-    out = []
-    for raw in r.stdout.split(","):
-        t = _norm(raw)
-        if not t or len(t) < 3 or t in NOT_TOPICS:
-            continue
-        t = by_key.get(t.rstrip("s"), t)   # "habits" -> existing "habit"
-        if t not in out:
-            out.append(t)
-    return out[:3]
+        return ""
+    return r.stdout.strip() if r.returncode == 0 else ""

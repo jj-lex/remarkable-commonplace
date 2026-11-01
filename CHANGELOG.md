@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 — 2026-11-01
+
+- **Bring your own model** for topics and handwriting, set separately: `apple` (default, on device), `anthropic` (official SDK, Claude Opus 5.5 at low effort), `openai`, `xai`, `openrouter`, `ollama`, any `openai-compatible` endpoint, or `none`
+- API keys from Keychain or environment variables, never the settings file
+- Prompts and topic clean-up shared by every provider; a misconfigured provider skips its step instead of stopping the sync
+
 ## 0.3.0 — 2026-11-01
 
 - **Mac sync** to Obsidian: one note per notecard (passage text from the book file, title, author, page, capture time, clip, handwriting image), Books / Topics / Recent / overview pages, a saved copy of each quoted book

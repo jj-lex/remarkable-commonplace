@@ -1,3 +1,5 @@
 pymupdf>=1.24
 rmscene>=0.7
 pillow>=10
+# only used if you set a provider to "anthropic"
+anthropic

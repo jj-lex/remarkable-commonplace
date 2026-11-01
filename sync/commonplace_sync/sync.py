@@ -5,7 +5,7 @@ import shutil
 import time
 from pathlib import Path
 
-from . import apple, book, health, notecard, vault
+from . import ai, book, health, notecard, vault
 from .config import CACHE, STATE, TABLET_DATA, XOCHITL, load
 from .tablet import Tablet, Unreachable
 
@@ -32,18 +32,19 @@ def fingerprint(*paths: Path) -> str:
 
 
 def enrich(card: dict, note_png: Path | None, existing: list[str] | None, known_topics: list[str]) -> None:
-    """Handwriting as text (Apple, on-device) and topics."""
-    card["note_text"] = apple.read_handwriting(note_png) if note_png else ""
+    """Handwriting as text and topics, via whichever providers are configured."""
+    card["note_text"] = ai.read_handwriting(note_png, log) if note_png else ""
     if existing:                       # yours (or ours from an earlier run): keep as is
         card["topics"] = existing
     else:
-        card["topics"] = apple.topics(card["passage"], card["note_text"], known_topics)
+        card["topics"] = ai.topics(card["passage"], card["note_text"], known_topics, log)
         known_topics.extend(t for t in card["topics"] if t not in known_topics)
 
 
 def run() -> int:
     cfg = load()
     state = load_state()
+    ai.configure(cfg, log)
     root: Path = cfg["vault_dir"]
 
     try:
