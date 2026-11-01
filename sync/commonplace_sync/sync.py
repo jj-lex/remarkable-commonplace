@@ -5,7 +5,7 @@ import shutil
 import time
 from pathlib import Path
 
-from . import apple, book, notecard, vault
+from . import apple, book, health, notecard, vault
 from .config import CACHE, STATE, TABLET_DATA, XOCHITL, load
 from .tablet import Tablet, Unreachable
 
@@ -50,10 +50,14 @@ def run() -> int:
         tab = Tablet(cfg["hosts"])
     except Unreachable:
         log("tablet not reachable — nothing to do")
+        health.check_unreachable(state, cfg["unreachable_alert_days"], log)
         save_state(state)
         return 0
     state["last_seen"] = time.time()
+    state.pop("alerted_unreachable", None)
     log("connected via", tab.host)
+    health.ensure_mod_running(tab, log)
+    health.check_wifi_passwords(cfg["wifi_host"], state, log)
 
     # 1. notecard logs written by the mod
     logs_dir = CACHE / "logs"
