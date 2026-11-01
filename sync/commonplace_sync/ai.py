@@ -47,7 +47,7 @@ def topics(passage: str, note: str, existing: list[str], log) -> list[str]:
         system += " If one of these subjects fits, use it instead of a new one: " + ", ".join(existing[:200]) + "."
     prompt = passage[:3000] + (f"\n(The reader wrote: {note[:1000]})" if note else "")
     try:
-        raw = _providers["topics"].complete(system, prompt, max_tokens=64)
+        raw = _providers["topics"].complete(system, prompt, max_tokens=2048)  # room for models that think before answering
     except ProviderError as e:
         log(f"topics: {e}")
         return []

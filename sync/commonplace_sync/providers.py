@@ -119,6 +119,8 @@ class AnthropicProvider:
                                 "security add-generic-password -a \"$USER\" -s commonplace-anthropic -w") from e
         if response.stop_reason == "refusal":
             return ""
+        if response.stop_reason == "max_tokens":
+            raise ProviderError("Claude hit the length limit before answering")
         return "".join(b.text for b in response.content if b.type == "text").strip()
 
     def complete(self, system, prompt, max_tokens=256):
@@ -129,7 +131,7 @@ class AnthropicProvider:
         return self._send("", [
             {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": data}},
             {"type": "text", "text": prompt},
-        ], 1024)
+        ], 4096)
 
 
 class OpenAICompatibleProvider:
@@ -173,7 +175,7 @@ class OpenAICompatibleProvider:
         return self._send([{"role": "user", "content": [
             {"type": "text", "text": prompt},
             {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{data}"}},
-        ]}], 1024)
+        ]}], 4096)
 
 
 def make(opts: dict | None):
