@@ -114,6 +114,7 @@ If a provider is misconfigured or unreachable, the sync logs why and skips that 
   "vault_dir": "~/path/to/vault/Books & Reading/Commonplace",
   "hosts": ["remarkable-wifi", "remarkable"],
   "wifi_host": "remarkable-wifi",
+  "timezone": "America/New_York",
   "recent_days": 14,
   "unreachable_alert_days": 3,
   "ai": {
@@ -124,3 +125,5 @@ If a provider is misconfigured or unreachable, the sync logs why and skips that 
 ```
 
 Set `wifi_host` to `""` to skip the Wi-Fi password check.
+
+`timezone` is any IANA name (`Europe/London`, `Asia/Tokyo`…); leave it empty to use your Mac's. The tablet's clock runs on UTC, so each sync tells the mod the current offset for your zone — notecard labels show your local time, including after daylight-saving changes.

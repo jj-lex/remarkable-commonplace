@@ -10,6 +10,7 @@ LOCATE AFTER ALL
 INSERT {
     property bool qcArmed: false
     property string qcPrevPen: "primary"
+    property int qcUtcOffset: -100000   // minutes east of UTC, from config.json (set by the Mac sync)
     property string qcNotebookId: ""   // loaded from /home/root/commonplace/config.json
 }
 END TRAVERSE
@@ -102,6 +103,7 @@ INSERT {
     function qcLoad() {
         root.qcReadJson("config.json", function (c) {
             if (c && c.notebookId) Values.qcNotebookId = String(c.notebookId);
+            if (c && c.utcOffsetMinutes !== undefined) Values.qcUtcOffset = Number(c.utcOffsetMinutes);
             console.log("QC notebook:", Values.qcNotebookId || "(not set up)");
         });
         root.qcReadJson("index.json", function (v) {
@@ -137,7 +139,10 @@ INSERT {
     }
 
     function qcFormatTime(t) {
-        return Qt.formatDateTime(new Date(t), "d MMM yyyy, h:mm ap");
+        // The tablet's clock runs on UTC; show the reader's own time zone instead.
+        const sys = -new Date(t).getTimezoneOffset();
+        const off = Values.qcUtcOffset > -100000 ? Values.qcUtcOffset : sys;
+        return Qt.formatDateTime(new Date(t + (off - sys) * 60000), "d MMM yyyy, h:mm ap");
     }
 
     function qcIsNotebook() {
@@ -168,6 +173,7 @@ INSERT {
     }
 
     function qcSave(withNote) {
+        root.qcLoad();   // pick up the latest settings (time zone, notebook)
         root.qcBarVisible = false;
         Values.qcArmed = false;
         root.qcWithNote = withNote;

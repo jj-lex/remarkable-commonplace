@@ -13,8 +13,15 @@ def safe(name: str, limit: int = 80) -> str:
     return name[:limit].rstrip(" .") or "Untitled"
 
 
+TZ = None  # set by the sync from config
+
+
+def local(ms: int) -> datetime:
+    return datetime.fromtimestamp(ms / 1000, TZ)
+
+
 def fmt_time(ms: int) -> str:
-    return datetime.fromtimestamp(ms / 1000).strftime("%-d %b %Y, %-I:%M %p").replace("AM", "am").replace("PM", "pm")
+    return local(ms).strftime("%-d %b %Y, %-I:%M %p").replace("AM", "am").replace("PM", "pm")
 
 
 def note_name(card: dict) -> str:
@@ -55,7 +62,7 @@ def write_notecard(root: Path, card: dict) -> Path:
         f'author: "{card["author"]}"' if card["author"] else "author: ",
         f"page: {card['page_label']}",
         *([f'printed_page: "{card["printed_page"]}"'] if card.get("printed_page") else []),
-        f"captured: {datetime.fromtimestamp(card['time'] / 1000).strftime('%Y-%m-%dT%H:%M')}",
+        f"captured: {local(card['time']).strftime('%Y-%m-%dT%H:%M')}",
         f"topics: {json.dumps(card.get('topics', []), ensure_ascii=False)}",
         f"notecard_id: {card['id']}",
     ]

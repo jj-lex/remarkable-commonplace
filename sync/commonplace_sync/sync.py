@@ -3,6 +3,7 @@ import hashlib
 import json
 import shutil
 import time
+from datetime import datetime
 from pathlib import Path
 
 from . import ai, book, health, notecard, vault
@@ -44,6 +45,7 @@ def enrich(card: dict, note_png: Path | None, existing: list[str] | None, known_
 def run() -> int:
     cfg = load()
     state = load_state()
+    vault.TZ = cfg["tz"]
     ai.configure(cfg, log)
     root: Path = cfg["vault_dir"]
 
@@ -68,7 +70,14 @@ def run() -> int:
     if not cfg_file.exists():
         log("no config.json on the tablet — run scripts/install.sh first")
         return 1
-    nb_id = json.loads(cfg_file.read_text())["notebookId"]
+    tablet_cfg = json.loads(cfg_file.read_text())
+    nb_id = tablet_cfg["notebookId"]
+    # keep the tablet's label times in the reader's time zone (handles daylight saving)
+    offset = int(datetime.now(cfg["tz"]).utcoffset().total_seconds() // 60)
+    if tablet_cfg.get("utcOffsetMinutes") != offset:
+        tablet_cfg["utcOffsetMinutes"] = offset
+        if tab.write_text(f"{TABLET_DATA}/config.json", json.dumps(tablet_cfg)):
+            log("set tablet time zone offset to", offset, "minutes")
     card_logs = []
     for f in sorted(logs_dir.glob("*.json")):
         if f.name in ("config.json", "index.json"):

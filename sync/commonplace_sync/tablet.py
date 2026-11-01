@@ -28,6 +28,10 @@ class Tablet:
     def run(self, cmd: str, timeout: int = 60) -> subprocess.CompletedProcess:
         return subprocess.run(["ssh", *SSH_OPTS, self.host, cmd], capture_output=True, text=True, timeout=timeout)
 
+    def write_text(self, path: str, text: str) -> bool:
+        r = subprocess.run(["ssh", *SSH_OPTS, self.host, f"cat > {shlex.quote(path)}"], input=text, capture_output=True, text=True)
+        return r.returncode == 0
+
     def exists(self, path: str) -> bool:
         return self.run(f"test -e {shlex.quote(path)}").returncode == 0
 

@@ -1,6 +1,8 @@
 """Settings live outside the repo, in ~/Library/Application Support/Commonplace/config.json."""
 import json
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 APP = Path.home() / "Library" / "Application Support" / "Commonplace"
 CONFIG = APP / "config.json"
@@ -14,6 +16,8 @@ DEFAULTS = {
     "hosts": ["remarkable-wifi", "remarkable"],
     # Host used to check that Wi-Fi SSH still refuses passwords (empty to skip).
     "wifi_host": "remarkable-wifi",
+    # IANA time zone for capture times, e.g. "America/New_York". Empty = this Mac's time zone.
+    "timezone": "",
     "recent_days": 14,
     # Alert if the tablet hasn't been reachable for this many days.
     "unreachable_alert_days": 3,
@@ -33,4 +37,5 @@ def load() -> dict:
     if not cfg["vault_dir"]:
         raise SystemExit(f"Set vault_dir in {CONFIG}")
     cfg["vault_dir"] = Path(cfg["vault_dir"]).expanduser()
+    cfg["tz"] = ZoneInfo(cfg["timezone"]) if cfg["timezone"] else datetime.now().astimezone().tzinfo
     return cfg
