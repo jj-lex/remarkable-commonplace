@@ -11,6 +11,6 @@ __pycache__/
 hashtab
 *.rm
 xochitl
-indexcards-data/
+commonplace-data/
 config.json
 index.json

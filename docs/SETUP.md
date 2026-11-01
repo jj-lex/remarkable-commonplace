@@ -56,11 +56,11 @@ ssh root@10.11.99.1 '/home/root/xovi/rebuild_hashtable'
 > **Important:** this script stops the tablet's interface and does **not** restart it. When it prints "Hashtable rebuilt", run
 > `ssh root@10.11.99.1 'systemctl start xochitl'` — otherwise the screen stays frozen.
 
-## 4. Create the Index Cards notebook
+## 4. Create the Commonplace notebook
 
-On the tablet, create a new notebook named exactly **Index Cards** (any template). Cards are added to the end of it.
+On the tablet, create a new notebook named exactly **Commonplace** (any template). Cards are added to the end of it.
 
-Want a different name, like *Index Cards 2026*? Pass it to the installer: `NOTEBOOK_NAME="Index Cards 2026" ./scripts/install.sh …`
+Want a different name, like *Commonplace 2026*? Pass it to the installer: `NOTEBOOK_NAME="Commonplace 2026" ./scripts/install.sh …`
 
 ## 5. Install the mod
 
@@ -73,8 +73,8 @@ From this repository:
 The script:
 
 1. checks that xovi and its lookup table are installed,
-2. finds your Index Cards notebook and saves its ID in `/home/root/indexcards/config.json`,
-3. copies `mod/indexCards.qmd` to the tablet,
+2. finds your Commonplace notebook and saves its ID in `/home/root/commonplace/config.json`,
+3. copies `mod/commonplace.qmd` to the tablet,
 4. starts xovi (the screen restarts once).
 
 ## 6. Try it
@@ -103,13 +103,13 @@ Each time the tablet reboots, start xovi again with `/home/root/xovi/start`.
 ./scripts/uninstall.sh root@10.11.99.1
 ```
 
-This removes the mod and restarts the interface. Your cards and the files in `/home/root/indexcards/` are kept. Rebooting also returns the tablet to stock.
+This removes the mod and restarts the interface. Your cards and the files in `/home/root/commonplace/` are kept. Rebooting also returns the tablet to stock.
 
 ## Troubleshooting
 
 | What you see | What to do |
 |---|---|
 | No ❝ button | xovi isn't running (reboot stops it). Run `/home/root/xovi/start`. |
-| "Index Cards notebook not set up" | Run `install.sh` again after creating the notebook. |
-| "Couldn't make the index card" | The notebook took too long to open. Try again; if it repeats, send the log lines from the command above in an issue. |
+| "Commonplace notebook not set up" | Run `install.sh` again after creating the notebook. |
+| "Couldn't make the notecard" | The notebook took too long to open. Try again; if it repeats, send the log lines from the command above in an issue. |
 | Screen frozen after `rebuild_hashtable` | Run `systemctl start xochitl` on the tablet. |

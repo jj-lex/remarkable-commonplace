@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Install the Index Cards mod on a reMarkable that already has xovi + qt-resource-rebuilder.
+# Install the Commonplace mod on a reMarkable that already has xovi + qt-resource-rebuilder.
 # Usage: ./scripts/install.sh [ssh-target]      (default: root@10.11.99.1)
-#        NOTEBOOK_NAME="Index Cards 2026" ./scripts/install.sh
+#        NOTEBOOK_NAME="Commonplace 2026" ./scripts/install.sh
 set -euo pipefail
 
 HOST="${1:-root@10.11.99.1}"
-NOTEBOOK="${NOTEBOOK_NAME:-Index Cards}"
+NOTEBOOK="${NOTEBOOK_NAME:-Commonplace}"
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
 XOCHITL=/home/root/.local/share/remarkable/xochitl
 QRR=/home/root/xovi/exthome/qt-resource-rebuilder
-DATA=/home/root/indexcards
+DATA=/home/root/commonplace
 
 say() { printf '\n==> %s\n' "$*"; }
 
@@ -32,7 +32,7 @@ say "Saving settings"
 ssh "$HOST" "mkdir -p $DATA && printf '{\"notebookId\": \"%s\"}\n' '$ID' > $DATA/config.json && { test -f $DATA/index.json || echo '[]' > $DATA/index.json; }"
 
 say "Copying the mod"
-scp -q "$HERE/mod/indexCards.qmd" "$HOST:$QRR/indexCards.qmd"
+scp -q "$HERE/mod/commonplace.qmd" "$HOST:$QRR/commonplace.qmd"
 
 say "Starting xovi (the screen restarts once)"
 ssh "$HOST" "/home/root/xovi/start >/dev/null 2>&1; sleep 10; systemctl is-active xochitl" || true

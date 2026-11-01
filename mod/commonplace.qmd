@@ -1,5 +1,5 @@
-; Index Cards — reMarkable 2, firmware 3.29.1.0
-; ❝ toolbar button: capture a passage, put it on a new page at the end of the Index Cards
+; Commonplace — reMarkable 2, firmware 3.29.1.0
+; ❝ toolbar button: capture a passage, put it on a new page at the end of the Commonplace
 ; notebook with "Book · p. N" typed at the top, tag the page with the book's name, log
 ; book/page/capture area for the Mac sync, then go back (Save) or stay to write (Save + note).
 
@@ -10,7 +10,7 @@ LOCATE AFTER ALL
 INSERT {
     property bool qcArmed: false
     property string qcPrevPen: "primary"
-    property string qcNotebookId: ""   // loaded from /home/root/indexcards/config.json
+    property string qcNotebookId: ""   // loaded from /home/root/commonplace/config.json
 }
 END TRAVERSE
 END AFFECT
@@ -79,7 +79,7 @@ INSERT {
     property int qcSettle: 0
     property int qcTarget: -1
 
-    readonly property string qcDir: "file:///home/root/indexcards/"
+    readonly property string qcDir: "file:///home/root/commonplace/"
 
     function qcReadJson(name, onDone) {
         const x = new XMLHttpRequest();
@@ -133,7 +133,7 @@ INSERT {
         for (let i = 0; i < root.document.pageCount; i++) {
             if (String(root.document.idForPage(i)) === e.cardPageId) { root.openPage(i); return; }
         }
-        root.showNotification({ message: "That card was deleted", type: ArkTokens.NotificationBar.secondary });
+        root.showNotification({ message: "That notecard was deleted", type: ArkTokens.NotificationBar.secondary });
     }
 
     function qcFormatTime(t) {
@@ -173,7 +173,7 @@ INSERT {
         root.qcWithNote = withNote;
         const nb = Values.qcNotebookId ? Library.entryForId(Values.qcNotebookId) : null;
         if (!nb) {
-            root.showNotification({ message: "Index Cards notebook not set up (see the setup guide)", type: ArkTokens.NotificationBar.secondary });
+            root.showNotification({ message: "Commonplace notebook not set up (see the setup guide)", type: ArkTokens.NotificationBar.secondary });
             return;
         }
         root.qcStep = 1;
@@ -290,11 +290,11 @@ INSERT {
                 stop();
                 console.log("QC timed out at step", root.qcStep, "page", root.currentPage, "target", root.qcTarget);
                 root.qcStep = 0;
-                root.showNotification({ message: "Couldn't make the index card", type: ArkTokens.NotificationBar.secondary });
+                root.showNotification({ message: "Couldn't make the notecard", type: ArkTokens.NotificationBar.secondary });
                 return;
             }
             if (root.qcStep === 1) {
-                // Index Cards is open and idle: add a page at the end
+                // Commonplace is open and idle: add a page at the end
                 if (root.qcIsNotebook() && root.documentLoaded && !root.addingPage && sceneView.status === SceneView.Active) {
                     root.qcTarget = root.document.pageCount;
                     root.qcStep = 2;
@@ -424,7 +424,7 @@ INSERT {
         Text {
             id: qcIndexTitle
             anchors.left: parent.left; anchors.top: parent.top; anchors.margins: 32
-            text: "Index  \u00B7  " + root.qcIndex.length + " cards"
+            text: "Commonplace  \u00B7  " + root.qcIndex.length + " notecards"
             font.pixelSize: 38; font.bold: true; color: "black"
         }
         Rectangle {
@@ -469,13 +469,13 @@ INSERT {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 12
                     Rectangle {
-                        width: 130; height: 72; radius: 10; color: "white"; border.color: "black"; border.width: 2
-                        Text { anchors.centerIn: parent; text: "Card"; font.pixelSize: 28; color: "black" }
+                        width: 170; height: 72; radius: 10; color: "white"; border.color: "black"; border.width: 2
+                        Text { anchors.centerIn: parent; text: "Notecard"; font.pixelSize: 28; color: "black" }
                         MouseArea { anchors.fill: parent; onClicked: root.qcGoToCard(modelData) }
                     }
                     Rectangle {
                         width: 150; height: 72; radius: 10; color: "black"
-                        Text { anchors.centerIn: parent; text: "Book \u2197"; font.pixelSize: 28; color: "white" }
+                        Text { anchors.centerIn: parent; text: "Source \u2197"; font.pixelSize: 28; color: "white" }
                         MouseArea { anchors.fill: parent; onClicked: root.qcOpenSource(modelData.sourceId, modelData.page) }
                     }
                 }
@@ -510,3 +510,4 @@ INSERT {
 }
 END TRAVERSE
 END AFFECT
+

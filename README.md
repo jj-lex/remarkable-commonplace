@@ -1,15 +1,17 @@
-# Index Cards for reMarkable
+# Commonplace for reMarkable
 
-Capture a passage while you read, drop it onto an index card, and write your thoughts next to it — without leaving the book for more than a few seconds.
+A commonplace book for your reMarkable, made of notecards.
 
-Index Cards is a small [xovi](https://github.com/asivery/xovi) mod for the reMarkable 2. It adds a **❝** button to the toolbar:
+Readers have kept commonplace books for centuries: passages copied from what they read, with their own notes, gathered under topics and found again through an index. Commonplace does this on the tablet. Capture a passage while you read, drop it onto a notecard, and write your thoughts next to it — without leaving the book for more than a few seconds.
+
+Commonplace is a small [xovi](https://github.com/asivery/xovi) mod for the reMarkable 2. It adds a **❝** button to the toolbar:
 
 1. Tap **❝** and draw around the passage you want.
 2. Choose **Save** (stay in the book) or **Save + note** (open the card to write on it).
-3. The passage is pasted onto a new page at the end of your **Index Cards** notebook, labelled with the book's title, author, page and the date and time you captured it.
+3. The passage is pasted onto a new page at the end of your **Commonplace** notebook, labelled with the book's title, author, page and the date and time you captured it.
 4. **Save** takes you straight back to your page. **Save + note** switches to the pen so you can write, with a **← Back to p. N** button to return.
 
-Inside the Index Cards notebook you also get:
+Inside the Commonplace notebook you also get:
 
 - **Index** — every card you've made, newest first, with one tap to the card or back to the passage in the book.
 - **Open p. N ↗** — on any card, jumps back to the page it came from.
@@ -29,12 +31,12 @@ Mods hook into the tablet's interface, which changes between firmware versions. 
 ## Safety
 
 - xovi is *tethered*: it does not start on boot. **Rebooting the tablet always returns it to stock.**
-- The mod only adds pages to your Index Cards notebook and writes files to `/home/root/indexcards/`. It never changes your books.
+- The mod only adds pages to your Commonplace notebook and writes files to `/home/root/commonplace/`. It never changes your books.
 - Take a backup before installing anything (the setup guide shows how).
 
 ## Install
 
-See the **[setup guide](docs/SETUP.md)**. In short: enable SSH, install xovi and its resource rebuilder, create a notebook called *Index Cards*, then run:
+See the **[setup guide](docs/SETUP.md)**. In short: enable SSH, install xovi and its resource rebuilder, create a notebook called *Commonplace*, then run:
 
 ```bash
 ./scripts/install.sh root@10.11.99.1
