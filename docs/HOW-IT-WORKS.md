@@ -1,6 +1,6 @@
 # How it works
 
-Quote Cards is a single [qmldiff](https://github.com/asivery/qmldiff) patch file, `mod/quoteCards.qmd`. When xovi starts, qt-resource-rebuilder applies it to the tablet's interface files in memory. Nothing on the tablet's system partition is changed.
+Index Cards is a single [qmldiff](https://github.com/asivery/qmldiff) patch file, `mod/indexCards.qmd`. When xovi starts, qt-resource-rebuilder applies it to the tablet's interface files in memory. Nothing on the tablet's system partition is changed.
 
 ## What the patch touches
 
@@ -17,7 +17,7 @@ tap ❝ ──► selection tool in capture mode
 draw loop ──► tablet cuts a clip ("snippet copied")
           ──► mod records book ID, title, author, page, capture area, time
 Save / Save + note
-  1. open the Quote Cards notebook
+  1. open the Index Cards notebook
   2. add a page at the end; wait until it is showing and settled
   3. paste the clip, centred horizontally
   4. type "Title — Author · p. N · date, time" at the top of the page
@@ -31,12 +31,12 @@ The mod waits for each step to finish (polling every 250 ms) instead of using fi
 
 ## Files on the tablet
 
-All under `/home/root/quotecards/`:
+All under `/home/root/indexcards/`:
 
 ### `config.json`
 
 ```json
-{ "notebookId": "<ID of your Quote Cards notebook>" }
+{ "notebookId": "<ID of your Index Cards notebook>" }
 ```
 
 Written by `scripts/install.sh`.
@@ -54,7 +54,7 @@ Written by `scripts/install.sh`.
   "pageCount": 320,
   "author": "<author as found>",
   "time": 1700000000000,
-  "notebookId": "<Quote Cards notebook ID>",
+  "notebookId": "<Index Cards notebook ID>",
   "cardPage": 2,
   "cardPageId": "<card page ID>",
   "savedAt": 1700000004000

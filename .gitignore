@@ -11,6 +11,6 @@ __pycache__/
 hashtab
 *.rm
 xochitl
-quotecards-data/
+indexcards-data/
 config.json
 index.json
