@@ -60,7 +60,7 @@ ssh root@10.11.99.1 '/home/root/xovi/rebuild_hashtable'
 
 On the tablet, create a **folder** named **Commonplace**, and inside it a **notebook** named **Commonplace 2026** (this year; any template). Notecards are added to the end of it.
 
-**One notebook per year.** Each January, create the next one (*Commonplace 2027*) in the same folder — that's the only yearly chore. If you've set up the Mac sync, it switches the mod to the new notebook automatically and reminds you on New Year's if it doesn't exist yet; until then, notecards keep going into last year's. Without the sync, run `install.sh` again after creating it.
+**One notebook per year.** Each January, create the next one (*Commonplace 2027*) in the same folder — that's the only yearly chore. If you've set up the Mac sync, it switches the mod to the new notebook automatically and reminds you on New Year's if it doesn't exist yet; until then, notecards keep going into the most recent earlier year's. Without the sync, run `install.sh` again after creating it.
 
 Prefer a single notebook? Name it anything and pass it to the installer: `NOTEBOOK_NAME="My Quotes" ./scripts/install.sh …`
 

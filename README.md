@@ -37,17 +37,25 @@ Mods hook into the tablet's interface, which changes between firmware versions. 
 
 ## Install
 
-See the **[setup guide](docs/SETUP.md)**. In short: enable SSH, install xovi and its resource rebuilder, create a *Commonplace* folder with a *Commonplace 2026* notebook inside, then run:
+Full walkthrough in the **[setup guide](docs/SETUP.md)**. The short version:
 
-```bash
-./scripts/install.sh root@10.11.99.1
-```
+1. **Tablet access.** Enable SSH, then install [xovi](https://github.com/asivery/rm-xovi-extensions) and rebuild its lookup table ([setup guide](docs/SETUP.md), steps 1–3).
+2. **Notebook.** On the tablet, create a folder named *Commonplace* with a notebook named *Commonplace 2026* (this year) inside.
+3. **The mod.** From this repo:
 
-Then, on your Mac:
+   ```bash
+   ./scripts/install.sh root@10.11.99.1
+   ```
 
-```bash
-./scripts/install-sync.sh "$HOME/path/to/vault/Books & Reading/Commonplace"
-```
+4. **The Mac sync** (optional, recommended — it also switches the mod back on after a tablet restart):
+
+   ```bash
+   ./scripts/install-sync.sh "$HOME/path/to/vault/Books & Reading/Commonplace"
+   ```
+
+5. **Set your time zone.** The tablet's clock runs on UTC, so notecard times would be hours off without this. The sync installer uses your Mac's time zone and prints it — check it, and to change it edit `"timezone"` in `~/Library/Application Support/Commonplace/config.json` (any IANA name, e.g. `"America/New_York"`, `"Europe/London"`). Or set it up front: `TIMEZONE="Europe/London" ./scripts/install-sync.sh "…"`.
+
+Topics and handwriting use Apple's on-device models by default. To use your own model instead, see [Bring your own model](docs/SYNC.md#bring-your-own-model).
 
 ## How it works
 

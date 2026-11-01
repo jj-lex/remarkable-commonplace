@@ -101,13 +101,16 @@ def run() -> int:
     years = yearly_notebooks(tab, xo)
     if years:
         this_year = datetime.now(cfg["tz"]).year
-        target = years.get(this_year) or years[max(years)]
+        # this year's notebook if it exists, otherwise the most recent earlier year (2027 -> 2026 -> 2025 ...)
+        past = [y for y in years if y <= this_year]
+        target = years[max(past)] if past else years[min(years)]
         if tablet_cfg.get("notebookId") != target:
             tablet_cfg["notebookId"] = target
             changed.append("notebook")
         if this_year not in years and state.get("reminded_year") != this_year:
+            using = max(past) if past else min(years)
             health.notify(f"Create a notebook named 'Commonplace {this_year}' in your Commonplace folder. "
-                          f"Until then, notecards go into Commonplace {max(years)}.")
+                          f"Until then, notecards go into Commonplace {using}.")
             state["reminded_year"] = this_year
     nb_id = tablet_cfg["notebookId"]
     # keep the tablet's label times in the reader's time zone (handles daylight saving)

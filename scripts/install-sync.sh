@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Set up the Mac sync and run it every 15 minutes in the background (macOS).
 # Usage: ./scripts/install-sync.sh "/path/to/your/vault/Books & Reading/Commonplace"
+#        TIMEZONE="Europe/London" ./scripts/install-sync.sh "..."   (default: your Mac's time zone)
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
@@ -28,12 +29,17 @@ if [ ! -f "$APP/config.json" ]; then
     echo "  ./scripts/install-sync.sh \"\$HOME/Notes/Books/Commonplace\""
     exit 1
   fi
-  python3 - "$APP/config.json" "$VAULT_DIR" <<'EOF'
+  TZ_NAME="${TIMEZONE:-$(readlink /etc/localtime | sed 's#.*/zoneinfo/##')}"
+  python3 - "$APP/config.json" "$VAULT_DIR" "$TZ_NAME" <<'EOF'
 import json, sys
-json.dump({"vault_dir": sys.argv[2], "hosts": ["remarkable-wifi", "remarkable"], "wifi_host": "remarkable-wifi"},
+json.dump({"vault_dir": sys.argv[2], "timezone": sys.argv[3],
+           "hosts": ["remarkable-wifi", "remarkable"], "wifi_host": "remarkable-wifi",
+           "ai": {"topics": {"provider": "apple"}, "handwriting": {"provider": "apple"}}},
           open(sys.argv[1], "w"), indent=2)
 EOF
   echo "Wrote $APP/config.json"
+  echo "Time zone: $TZ_NAME  <- check this. Notecard times use it (the tablet's own clock is UTC)."
+  echo "           To change it, edit \"timezone\" in that file, e.g. \"Europe/London\"."
 else
   echo "Keeping existing $APP/config.json"
 fi

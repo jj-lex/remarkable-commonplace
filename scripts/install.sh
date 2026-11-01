@@ -37,7 +37,10 @@ fi
 echo "Found it."
 
 say "Saving settings"
-ssh "$HOST" "mkdir -p $DATA && printf '{\"notebookId\": \"%s\"}\n' '$ID' > $DATA/config.json && { test -f $DATA/index.json || echo '[]' > $DATA/index.json; }"
+# keep a time zone offset the Mac sync may already have written
+OFF="$(ssh "$HOST" "sed -n 's/.*\"utcOffsetMinutes\": *\(-\{0,1\}[0-9]*\).*/\1/p' $DATA/config.json 2>/dev/null")"
+if [ -n "$OFF" ]; then CFG="{\"notebookId\": \"$ID\", \"utcOffsetMinutes\": $OFF}"; else CFG="{\"notebookId\": \"$ID\"}"; fi
+ssh "$HOST" "mkdir -p $DATA && echo '$CFG' > $DATA/config.json && { test -f $DATA/index.json || echo '[]' > $DATA/index.json; }"
 
 say "Copying the mod"
 scp -q "$HERE/mod/commonplace.qmd" "$HOST:$QRR/commonplace.qmd"
@@ -46,3 +49,4 @@ say "Starting xovi (the screen restarts once)"
 ssh "$HOST" "/home/root/xovi/start >/dev/null 2>&1; sleep 10; systemctl is-active xochitl" || true
 
 say "Done. Open a book and look for the ❝ button in the toolbar."
+echo "Times on notecards show in UTC until the Mac sync sets your time zone (see docs/SYNC.md)."
