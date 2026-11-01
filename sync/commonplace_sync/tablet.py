@@ -15,12 +15,15 @@ class Unreachable(Exception):
 class Tablet:
     def __init__(self, hosts: list[str]):
         self.host = None
+        errors = []
         for h in hosts:
-            if subprocess.run(["ssh", *SSH_OPTS, h, "true"], capture_output=True).returncode == 0:
+            r = subprocess.run(["ssh", *SSH_OPTS, h, "true"], capture_output=True, text=True)
+            if r.returncode == 0:
                 self.host = h
                 break
+            errors.append(f"{h}: {r.stderr.strip().splitlines()[-1] if r.stderr.strip() else 'exit ' + str(r.returncode)}")
         if not self.host:
-            raise Unreachable("tablet not reachable")
+            raise Unreachable("; ".join(errors))
 
     def run(self, cmd: str, timeout: int = 60) -> subprocess.CompletedProcess:
         return subprocess.run(["ssh", *SSH_OPTS, self.host, cmd], capture_output=True, text=True, timeout=timeout)

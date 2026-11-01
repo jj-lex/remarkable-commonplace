@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0 — 2026-11-01
+
+- **Mac sync** to Obsidian: one note per notecard (passage text from the book file, title, author, page, capture time, clip, handwriting image), Books / Topics / Recent / overview pages, a saved copy of each quoted book
+- Handwriting recognized as text with Apple's on-device Vision
+- Topics from Apple's on-device language model, reusing existing topics; your edits are kept
+- The sync switches the mod back on after a tablet restart, and notifies you about Wi-Fi password login coming back or the tablet being unreachable
+- `install-sync.sh` / `uninstall-sync.sh` and a background job every 15 minutes
+
 ## 0.2.0 — 2026-11-01
 
 - Renamed to **Commonplace**: a commonplace book made of notecards (index title, Notecard / Source buttons, mod file, data folder, repo)

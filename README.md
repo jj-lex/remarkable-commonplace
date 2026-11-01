@@ -17,7 +17,7 @@ Inside the Commonplace notebook you also get:
 - **Index** — every card you've made, newest first, with one tap to the card or back to the passage in the book.
 - **Open p. N ↗** — on any card, jumps back to the page it came from.
 
-Every card is also logged as a small JSON file on the tablet (book, page, capture area, time), so a sync tool on your computer can build a searchable catalog of quotes. That sync is the next part of this project.
+On your Mac, the **sync** turns every notecard into a note in your Obsidian vault — passage text, title, author, page, capture time, your handwriting (as an image and as text), topics, and a link that opens the book at that page — plus a page per book and per topic. It runs every 15 minutes in the background, entirely on your Mac (handwriting and topics use Apple's on-device models). See [docs/SYNC.md](docs/SYNC.md).
 
 ## Status
 
@@ -43,22 +43,29 @@ See the **[setup guide](docs/SETUP.md)**. In short: enable SSH, install xovi and
 ./scripts/install.sh root@10.11.99.1
 ```
 
+Then, on your Mac:
+
+```bash
+./scripts/install-sync.sh "$HOME/path/to/vault/Books & Reading/Commonplace"
+```
+
 ## How it works
 
-See [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) for the capture flow and the files the mod writes.
+See [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) for the capture flow and the files the mod writes, and [docs/SYNC.md](docs/SYNC.md) for the Mac sync.
 
 ## Roadmap
 
-- [ ] Mac sync: turn each card into a note in an Obsidian vault (quote text, book, author, page, your handwriting)
+- [x] Mac sync to Obsidian: passage text, details, handwriting as text, topics, book and topic pages
 - [x] Highlight the captured passage in the book (diagonal stroke)
-- [ ] Restart the mod automatically after the tablet reboots (part of the Mac sync)
+- [x] Restart the mod automatically after the tablet reboots (done by the sync)
 - [ ] Rectangle capture, highlighting from a loop, and a margin above and below the highlight — parked: these need a native helper that can create pen lines, which mods can't do on their own
 
 ## Known limits
 
 - Highlighting only works with a diagonal stroke. Start just above the first line and end just below the last, or the first or last line can be missed.
 - The clip follows the shape you draw. A loop gives a loop-shaped clip.
-- After the tablet fully restarts (power off, flat battery, crash, firmware update) the mod is off until xovi is started again. Sleep is fine.
+- After the tablet fully restarts (power off, flat battery, crash, firmware update) the mod is off until xovi is started again — the Mac sync does this for you within 15 minutes. Sleep is fine.
+- Topics come from a small on-device model and are sometimes off. Edit them in a note's properties; your edits stick.
 
 ## Credits
 

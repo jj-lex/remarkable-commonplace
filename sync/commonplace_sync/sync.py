@@ -48,8 +48,8 @@ def run() -> int:
 
     try:
         tab = Tablet(cfg["hosts"])
-    except Unreachable:
-        log("tablet not reachable — nothing to do")
+    except Unreachable as e:
+        log("tablet not reachable — nothing to do (" + str(e) + ")")
         health.check_unreachable(state, cfg["unreachable_alert_days"], log)
         save_state(state)
         return 0
