@@ -8,7 +8,7 @@ Commonplace is a small [xovi](https://github.com/asivery/xovi) mod for the reMar
 
 1. Tap **❝**, then drag diagonally from the first word of the passage to the last (or draw a loop around it).
 2. Choose **Save** (stay in the book) or **Save + note** (open the card to write on it).
-3. The passage is pasted onto a new page at the end of your **Commonplace** notebook, labelled with the book's title, author, page and the date and time you captured it.
+3. The passage is pasted onto a new page at the end of this year's notebook (*Commonplace 2026*, in a *Commonplace* folder), labelled with the book's title, author, page and the date and time you captured it.
 4. A diagonal stroke also **highlights the passage in the book**, so you see it when you reread.
 5. **Save** takes you straight back to your page. **Save + note** switches to the pen so you can write, with a **← Back to p. N** button to return.
 
@@ -37,7 +37,7 @@ Mods hook into the tablet's interface, which changes between firmware versions. 
 
 ## Install
 
-See the **[setup guide](docs/SETUP.md)**. In short: enable SSH, install xovi and its resource rebuilder, create a notebook called *Commonplace*, then run:
+See the **[setup guide](docs/SETUP.md)**. In short: enable SSH, install xovi and its resource rebuilder, create a *Commonplace* folder with a *Commonplace 2026* notebook inside, then run:
 
 ```bash
 ./scripts/install.sh root@10.11.99.1

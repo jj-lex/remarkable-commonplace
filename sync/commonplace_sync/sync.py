@@ -1,6 +1,7 @@
 """One sync pass: pull notecards from the tablet and write them into the vault."""
 import hashlib
 import json
+import re
 import shutil
 import time
 from datetime import datetime
@@ -42,6 +43,29 @@ def enrich(card: dict, note_png: Path | None, existing: list[str] | None, known_
         known_topics.extend(t for t in card["topics"] if t not in known_topics)
 
 
+YEAR_NAME = re.compile(r"^Commonplace (\d{4})$")
+
+
+def yearly_notebooks(tab: Tablet, xo: Path) -> dict[int, str]:
+    """{year: notebook id} for notebooks named 'Commonplace YYYY' inside a folder named 'Commonplace'."""
+    meta_dir = xo / "_meta"
+    shutil.rmtree(meta_dir, ignore_errors=True)
+    r = tab.run(f"cd {XOCHITL} && grep -l -E '\"visibleName\": \"Commonplace( [0-9]{{4}})?\"' *.metadata 2>/dev/null")
+    names = r.stdout.split()
+    if not names:
+        return {}
+    tab.fetch(XOCHITL, names, meta_dir)
+    metas = {f.name[:-9]: json.loads(f.read_text()) for f in meta_dir.glob("*.metadata")}
+    folders = {u for u, m in metas.items() if m.get("type") == "CollectionType"
+               and m.get("visibleName") == "Commonplace" and m.get("parent") != "trash"}
+    years = {}
+    for u, m in metas.items():
+        hit = YEAR_NAME.match(m.get("visibleName", ""))
+        if m.get("type") == "DocumentType" and hit and m.get("parent") in folders:
+            years[int(hit.group(1))] = u
+    return years
+
+
 def run() -> int:
     cfg = load()
     state = load_state()
@@ -71,13 +95,28 @@ def run() -> int:
         log("no config.json on the tablet — run scripts/install.sh first")
         return 1
     tablet_cfg = json.loads(cfg_file.read_text())
+    xo = CACHE / "xochitl"
+    changed = []
+    # one notebook per year: point the mod at this year's "Commonplace YYYY" notebook
+    years = yearly_notebooks(tab, xo)
+    if years:
+        this_year = datetime.now(cfg["tz"]).year
+        target = years.get(this_year) or years[max(years)]
+        if tablet_cfg.get("notebookId") != target:
+            tablet_cfg["notebookId"] = target
+            changed.append("notebook")
+        if this_year not in years and state.get("reminded_year") != this_year:
+            health.notify(f"Create a notebook named 'Commonplace {this_year}' in your Commonplace folder. "
+                          f"Until then, notecards go into Commonplace {max(years)}.")
+            state["reminded_year"] = this_year
     nb_id = tablet_cfg["notebookId"]
     # keep the tablet's label times in the reader's time zone (handles daylight saving)
     offset = int(datetime.now(cfg["tz"]).utcoffset().total_seconds() // 60)
     if tablet_cfg.get("utcOffsetMinutes") != offset:
         tablet_cfg["utcOffsetMinutes"] = offset
-        if tab.write_text(f"{TABLET_DATA}/config.json", json.dumps(tablet_cfg)):
-            log("set tablet time zone offset to", offset, "minutes")
+        changed.append("time zone")
+    if changed and tab.write_text(f"{TABLET_DATA}/config.json", json.dumps(tablet_cfg)):
+        log("updated tablet settings:", ", ".join(changed))
     card_logs = []
     for f in sorted(logs_dir.glob("*.json")):
         if f.name in ("config.json", "index.json"):
@@ -86,12 +125,15 @@ def run() -> int:
         if isinstance(c.get("id"), str) and c.get("cardPageId"):
             card_logs.append(c)
 
-    # 2. the notebook (small) and the books the notecards came from (cached)
-    xo = CACHE / "xochitl"
-    nb_folder = xo / nb_id
-    shutil.rmtree(nb_folder, ignore_errors=True)
-    tab.fetch(XOCHITL, [f"{nb_id}.content", nb_id], xo)
-    live = set(notecard.live_pages(json.loads((xo / f"{nb_id}.content").read_text())))
+    # 2. the notebooks the notecards live in (small) and the books they came from (cached)
+    nb_ids = sorted({lg.get("notebookId") or nb_id for lg in card_logs} | {nb_id})
+    for n in nb_ids:
+        shutil.rmtree(xo / n, ignore_errors=True)
+    tab.fetch(XOCHITL, [x for n in nb_ids for x in (f"{n}.content", n)], xo)
+    live = set()
+    for n in nb_ids:
+        if (xo / f"{n}.content").exists():
+            live |= set(notecard.live_pages(json.loads((xo / f"{n}.content").read_text())))
 
     book_ids = sorted({c["id"] for c in card_logs})
     names = [f"{b}.{ext}" for b in book_ids for ext in ("pdf", "epub", "content", "metadata")]
@@ -109,6 +151,7 @@ def run() -> int:
     for lg in card_logs:
         cid = lg["cardPageId"]
         prev = state["cards"].get(cid, {})
+        nb_folder = xo / (lg.get("notebookId") or nb_id)
         rm = nb_folder / f"{cid}.rm"
         clip_src = notecard.clip_image(nb_folder, cid)
         removed = cid not in live

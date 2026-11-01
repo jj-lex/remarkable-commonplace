@@ -24,6 +24,7 @@ Write anything you like below the line `%% Everything above this line is updated
 - **Handwriting** is read by Apple's on-device Vision text recognition by default. Approximate for messy writing; the image is always there too. A vision LLM (Claude, GPT, Grok…) does much better — see *Bring your own model*.
 - **Topics** come from Apple's on-device language model by default (macOS 26+, Apple silicon, Apple Intelligence on). 1–3 per notecard, reusing existing topics where they fit. Small model, so expect the odd miss — swap in a bigger model, or edit the note's `topics` property and it sticks.
 
+- **One notebook per year**: the sync looks for notebooks named *Commonplace YYYY* in the *Commonplace* folder and points the mod at this year's. If it doesn't exist yet, notecards keep going into the newest one and you get one reminder to create it.
 - **Health**: if the tablet fully restarted, the sync switches the mod back on. You get one notification if Wi-Fi SSH starts accepting passwords again (firmware updates do this) or if the tablet hasn't been reachable for 3 days.
 
 Only these two steps use AI. Everything else — pulling from the tablet, passage text, book details, notes and pages — is ordinary code.

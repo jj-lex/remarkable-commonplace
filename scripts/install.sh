@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Install the Commonplace mod on a reMarkable that already has xovi + qt-resource-rebuilder.
 # Usage: ./scripts/install.sh [ssh-target]      (default: root@10.11.99.1)
-#        NOTEBOOK_NAME="Commonplace 2026" ./scripts/install.sh
+#        NOTEBOOK_NAME="My Quotes" ./scripts/install.sh      (default: "Commonplace <this year>", then "Commonplace")
 set -euo pipefail
 
 HOST="${1:-root@10.11.99.1}"
-NOTEBOOK="${NOTEBOOK_NAME:-Commonplace}"
+NOTEBOOK="${NOTEBOOK_NAME:-}"
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
 XOCHITL=/home/root/.local/share/remarkable/xochitl
 QRR=/home/root/xovi/exthome/qt-resource-rebuilder
@@ -20,10 +20,18 @@ say "Checking xovi"
 ssh "$HOST" "test -f /home/root/xovi/xovi.so" || { echo "xovi is not installed. See docs/SETUP.md, step 3."; exit 1; }
 ssh "$HOST" "test -f $QRR/hashtab" || { echo "No lookup table. Run /home/root/xovi/rebuild_hashtable first (docs/SETUP.md, step 3)."; exit 1; }
 
-say "Finding the notebook \"$NOTEBOOK\""
-ID="$(ssh "$HOST" "cd $XOCHITL && grep -l '\"visibleName\": \"$NOTEBOOK\"' *.metadata 2>/dev/null | while read f; do grep -q '\"parent\": \"trash\"' \"\$f\" || echo \"\${f%.metadata}\"; done | head -n 1")"
+find_notebook() {
+  ssh "$HOST" "cd $XOCHITL && grep -l '\"visibleName\": \"$1\"' *.metadata 2>/dev/null | while read f; do grep -q '\"parent\": \"trash\"' \"\$f\" || echo \"\${f%.metadata}\"; done | head -n 1"
+}
+if [ -n "$NOTEBOOK" ]; then CANDIDATES=("$NOTEBOOK"); else CANDIDATES=("Commonplace $(date +%Y)" "Commonplace"); fi
+ID=""
+for name in "${CANDIDATES[@]}"; do
+  say "Looking for the notebook \"$name\""
+  ID="$(find_notebook "$name")"
+  [ -n "$ID" ] && break
+done
 if [ -z "$ID" ]; then
-  echo "No notebook named \"$NOTEBOOK\" found. Create it on the tablet, or set NOTEBOOK_NAME."
+  echo "No notebook found. On the tablet, create a folder named Commonplace with a notebook named \"Commonplace $(date +%Y)\" inside it (or set NOTEBOOK_NAME)."
   exit 1
 fi
 echo "Found it."

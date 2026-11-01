@@ -58,9 +58,11 @@ ssh root@10.11.99.1 '/home/root/xovi/rebuild_hashtable'
 
 ## 4. Create the Commonplace notebook
 
-On the tablet, create a new notebook named exactly **Commonplace** (any template). Cards are added to the end of it.
+On the tablet, create a **folder** named **Commonplace**, and inside it a **notebook** named **Commonplace 2026** (this year; any template). Notecards are added to the end of it.
 
-Want a different name, like *Commonplace 2026*? Pass it to the installer: `NOTEBOOK_NAME="Commonplace 2026" ./scripts/install.sh …`
+**One notebook per year.** Each January, create the next one (*Commonplace 2027*) in the same folder — that's the only yearly chore. If you've set up the Mac sync, it switches the mod to the new notebook automatically and reminds you on New Year's if it doesn't exist yet; until then, notecards keep going into last year's. Without the sync, run `install.sh` again after creating it.
+
+Prefer a single notebook? Name it anything and pass it to the installer: `NOTEBOOK_NAME="My Quotes" ./scripts/install.sh …`
 
 ## 5. Install the mod
 
@@ -73,7 +75,7 @@ From this repository:
 The script:
 
 1. checks that xovi and its lookup table are installed,
-2. finds your Commonplace notebook and saves its ID in `/home/root/commonplace/config.json`,
+2. finds this year's Commonplace notebook and saves its ID in `/home/root/commonplace/config.json`,
 3. copies `mod/commonplace.qmd` to the tablet,
 4. starts xovi (the screen restarts once).
 

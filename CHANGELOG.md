@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0 — 2026-11-01
+
+- **Time zone**: capture times show in your own zone (`timezone` setting; default your Mac's). The tablet's clock is UTC, so each sync passes the current offset to the mod, including daylight-saving changes
+- **One notebook per year** in a *Commonplace* folder (*Commonplace 2026*, *2027*…). The sync points the mod at this year's notebook and reminds you once on New Year's to create it; notecards from every year stay in the index and in Obsidian
+- Claude tested end to end (topics and handwriting); thinking models get room to answer
+
 ## 0.4.0 — 2026-11-01
 
 - **Bring your own model** for topics and handwriting, set separately: `apple` (default, on device), `anthropic` (official SDK, Claude Opus 5.5 at low effort), `openai`, `xai`, `openrouter`, `ollama`, any `openai-compatible` endpoint, or `none`
