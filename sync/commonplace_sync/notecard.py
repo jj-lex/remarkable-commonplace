@@ -39,13 +39,15 @@ def strokes(rm_file: Path) -> list[list[tuple[float, float]]]:
     return out
 
 
-def render_handwriting(lines: list, dest: Path, width: int = 4) -> bool:
-    """Draw the strokes in black on white, cropped to the writing. Returns False if there's none."""
+def render_handwriting(lines: list, dest: Path, width: int = 9, scale: int = 3) -> bool:
+    """Draw the strokes in black on white, cropped to the writing, at 3x size (on-device
+    recognition reads larger, bolder writing much better). Returns False if there's none."""
     if not lines:
         return False
+    lines = [[(x * scale, y * scale) for x, y in s] for s in lines]
     xs = [x for s in lines for x, _ in s]
     ys = [y for s in lines for _, y in s]
-    pad = 24
+    pad = 24 * scale
     x0, y0, x1, y1 = min(xs) - pad, min(ys) - pad, max(xs) + pad, max(ys) + pad
     img = Image.new("RGB", (int(x1 - x0), int(y1 - y0)), "white")
     d = ImageDraw.Draw(img)

@@ -5,7 +5,7 @@ import shutil
 import time
 from pathlib import Path
 
-from . import book, notecard, vault
+from . import apple, book, notecard, vault
 from .config import CACHE, STATE, TABLET_DATA, XOCHITL, load
 from .tablet import Tablet, Unreachable
 
@@ -32,8 +32,8 @@ def fingerprint(*paths: Path) -> str:
 
 
 def enrich(card: dict, note_png: Path | None, existing: list[str] | None, known_topics: list[str]) -> None:
-    """Hook for handwriting text and topics (added in later steps)."""
-    card.setdefault("note_text", "")
+    """Handwriting as text (Apple, on-device) and topics."""
+    card["note_text"] = apple.read_handwriting(note_png) if note_png else ""
     card["topics"] = existing if existing is not None else []
 
 
