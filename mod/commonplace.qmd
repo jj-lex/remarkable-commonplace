@@ -511,3 +511,24 @@ INSERT {
 END TRAVERSE
 END AFFECT
 
+
+; ---------- highlight the captured passage in the book ----------
+; While ❝ is on, the capture stroke is also handed to the tablet's own text highlighter
+; (snap-to-text). A stroke dragged from the first word to the last highlights that passage.
+AFFECT /qml/device/view/documentview/DeviceSceneView.qml
+TRAVERSE ?#strokeHandler
+REBUILD onStrokeCompleted
+LOCATE AFTER STREAM | controller.createImageSnippetFromStroke(stroke,root.defaultScale); |
+INSERT {
+if (Values.qcArmed && !root.notePage) {
+    try {
+        controller.highlightWithLine(stroke, SceneController.SnapEnabled);
+        console.log("QC highlight added");
+    } catch (e) {
+        console.log("QC highlight failed:", e);
+    }
+}
+}
+END REBUILD
+END TRAVERSE
+END AFFECT
