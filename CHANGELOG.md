@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 — 2026-11-01
+
+- Renamed to **Commonplace**: a commonplace book made of notecards (index title, Notecard / Source buttons, mod file, data folder, repo)
+- A diagonal capture stroke now highlights the passage in the book, using the tablet's own snap-to-text highlighter
+- Tried rectangle capture by cropping a screenshot: the reMarkable 2's display crashes on screenshots, so it's not included
+
 ## 0.1.0 — 2026-11-01
 
 First working version on reMarkable 2, firmware 3.29.1.0.

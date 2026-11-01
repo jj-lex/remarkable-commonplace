@@ -6,10 +6,11 @@ Readers have kept commonplace books for centuries: passages copied from what the
 
 Commonplace is a small [xovi](https://github.com/asivery/xovi) mod for the reMarkable 2. It adds a **❝** button to the toolbar:
 
-1. Tap **❝** and draw around the passage you want.
+1. Tap **❝**, then drag diagonally from the first word of the passage to the last (or draw a loop around it).
 2. Choose **Save** (stay in the book) or **Save + note** (open the card to write on it).
 3. The passage is pasted onto a new page at the end of your **Commonplace** notebook, labelled with the book's title, author, page and the date and time you captured it.
-4. **Save** takes you straight back to your page. **Save + note** switches to the pen so you can write, with a **← Back to p. N** button to return.
+4. A diagonal stroke also **highlights the passage in the book**, so you see it when you reread.
+5. **Save** takes you straight back to your page. **Save + note** switches to the pen so you can write, with a **← Back to p. N** button to return.
 
 Inside the Commonplace notebook you also get:
 
@@ -49,8 +50,15 @@ See [docs/HOW-IT-WORKS.md](docs/HOW-IT-WORKS.md) for the capture flow and the fi
 ## Roadmap
 
 - [ ] Mac sync: turn each card into a note in an Obsidian vault (quote text, book, author, page, your handwriting)
-- [ ] Rectangle capture (drag corner to corner instead of drawing a loop)
-- [ ] Highlight the captured passage in the book automatically
+- [x] Highlight the captured passage in the book (diagonal stroke)
+- [ ] Restart the mod automatically after the tablet reboots (part of the Mac sync)
+- [ ] Rectangle capture, highlighting from a loop, and a margin above and below the highlight — parked: these need a native helper that can create pen lines, which mods can't do on their own
+
+## Known limits
+
+- Highlighting only works with a diagonal stroke. Start just above the first line and end just below the last, or the first or last line can be missed.
+- The clip follows the shape you draw. A loop gives a loop-shaped clip.
+- After the tablet fully restarts (power off, flat battery, crash, firmware update) the mod is off until xovi is started again. Sleep is fine.
 
 ## Credits
 

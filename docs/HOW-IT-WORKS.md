@@ -8,13 +8,15 @@ Commonplace is a single [qmldiff](https://github.com/asivery/qmldiff) patch file
 |---|---|
 | `/qml/common/Values.qml` | Shared state: whether ❝ is on, the notebook ID, the tool to restore afterwards |
 | `/qt/qml/xofm/libs/toolbar/qml/Toolbar.qml` | The ❝ button, placed after the built-in editing tools. Tapping it switches to the capture tool. |
+| `/qml/device/view/documentview/DeviceSceneView.qml` | Passes the capture stroke to the tablet's text highlighter (snap-to-text) so the passage is highlighted in the book |
 | `/qml/device/view/documentview/DocumentView.qml` | Everything else: reacting to a capture, the Save bar, making the card, the label, Back, Index and the open-in-book link |
 
 ## Capture flow
 
 ```
 tap ❝ ──► selection tool in capture mode
-draw loop ──► tablet cuts a clip ("snippet copied")
+draw loop or diagonal ──► tablet cuts a clip ("snippet copied")
+                       ──► a diagonal is also handed to the highlighter
           ──► mod records book ID, title, author, page, capture area, time
 Save / Save + note
   1. open the Commonplace notebook

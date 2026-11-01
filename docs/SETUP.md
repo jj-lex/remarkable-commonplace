@@ -80,7 +80,7 @@ The script:
 ## 6. Try it
 
 1. Open any book (EPUB or PDF) and tap **❝** in the toolbar. It turns black and switches to the capture tool.
-2. Draw a loop around a passage.
+2. Drag diagonally from the first word to the last (this also highlights it), or draw a loop around it.
 3. Tap **Save** or **Save + note**.
 
 ## After a firmware update
@@ -95,7 +95,7 @@ xovi does not survive a reboot, and mods are tied to the firmware version. After
    ssh root@10.11.99.1 'journalctl -u xochitl --since "-10min" | grep -E "QC |qmldiff|TypeError"'
    ```
 
-Each time the tablet reboots, start xovi again with `/home/root/xovi/start`.
+Sleep and closing the cover are fine. Each time the tablet fully restarts (power off, flat battery, crash, firmware update), start xovi again with `/home/root/xovi/start`.
 
 ## Uninstall
 
