@@ -1,0 +1,512 @@
+; Quote Cards — reMarkable 2, firmware 3.29.1.0
+; ❝ toolbar button: capture a passage, put it on a new page at the end of the Quote Cards
+; notebook with "Book · p. N" typed at the top, tag the page with the book's name, log
+; book/page/capture area for the Mac sync, then go back (Save) or stay to write (Save + note).
+
+; ---------- shared state ----------
+AFFECT /qml/common/Values.qml
+TRAVERSE Item
+LOCATE AFTER ALL
+INSERT {
+    property bool qcArmed: false
+    property string qcPrevPen: "primary"
+    property string qcNotebookId: ""   // loaded from /home/root/quotecards/config.json
+}
+END TRAVERSE
+END AFFECT
+
+; ---------- the ❝ button ----------
+AFFECT /qt/qml/xofm/libs/toolbar/qml/Toolbar.qml
+IMPORT common 1.0
+TRAVERSE ?#toolLayout
+LOCATE AFTER Repeater#editingTools
+INSERT {
+    Item {
+        id: qcQuoteButton
+        objectName: "qcQuoteButton"
+        visible: root.expanded
+        Layout.preferredWidth: root.minSize.width
+        Layout.preferredHeight: root.minSize.height
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: parent.width * 0.12
+            radius: width * 0.18
+            color: Values.qcArmed ? "black" : "transparent"
+            border.color: "black"
+            border.width: 2
+            Text {
+                anchors.centerIn: parent
+                anchors.verticalCenterOffset: parent.height * 0.14
+                text: "“"
+                font.pixelSize: parent.height * 0.95
+                font.bold: true
+                color: Values.qcArmed ? "white" : "black"
+            }
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {
+                if (!Values.qcArmed) Values.qcPrevPen = (root.selectedPen && root.selectedPen.penToolType && root.selectedPen.penToolType !== "selection") ? root.selectedPen.penToolType : "primary";
+                Values.qcArmed = !Values.qcArmed;
+                console.log("QC button, armed =", Values.qcArmed);
+                if (Values.qcArmed) {
+                    root.selectSelection();
+                    Qt.callLater(function () {
+                        root.selectionToolModeSelected(ToolbarModel.SelectionToolMode.Snippet);
+                    });
+                }
+            }
+        }
+    }
+}
+END TRAVERSE
+END AFFECT
+
+; ---------- capture -> card -> back ----------
+AFFECT /qml/device/view/documentview/DocumentView.qml
+TRAVERSE ?#root
+LOCATE AFTER ALL
+INSERT {
+    property var qcSource: null
+    property var qcIndex: []
+    property bool qcIndexVisible: false
+    readonly property var qcCurrentCard: root.qcFindCard(String(root.currentPageId), root.qcIndex)
+    property bool qcBarVisible: false
+    property bool qcBackVisible: false
+    property bool qcWithNote: false
+    property int qcStep: 0
+    property int qcTicks: 0
+    property int qcSettle: 0
+    property int qcTarget: -1
+
+    readonly property string qcDir: "file:///home/root/quotecards/"
+
+    function qcReadJson(name, onDone) {
+        const x = new XMLHttpRequest();
+        x.onreadystatechange = function () {
+            if (x.readyState !== XMLHttpRequest.DONE) return;
+            let v = null;
+            try { v = JSON.parse(x.responseText); } catch (e) {}
+            onDone(v);
+        };
+        x.open("GET", root.qcDir + name);
+        x.send();
+    }
+
+    function qcWriteJson(name, value) {
+        const x = new XMLHttpRequest();
+        x.open("PUT", root.qcDir + name);
+        x.send(JSON.stringify(value));
+    }
+
+    function qcLoad() {
+        root.qcReadJson("config.json", function (c) {
+            if (c && c.notebookId) Values.qcNotebookId = String(c.notebookId);
+            console.log("QC notebook:", Values.qcNotebookId || "(not set up)");
+        });
+        root.qcReadJson("index.json", function (v) {
+            root.qcIndex = Array.isArray(v) ? v : [];
+            console.log("QC index entries:", root.qcIndex.length);
+        });
+    }
+
+    function qcFindCard(pageId, index) {
+        for (let i = 0; i < index.length; i++) if (index[i].cardPageId === pageId) return index[i];
+        return null;
+    }
+
+    function qcOpenSource(id, page) {
+        const src = Library.entryForId(id);
+        if (!src) {
+            root.showNotification({ message: "That book is no longer on this tablet", type: ArkTokens.NotificationBar.secondary });
+            return;
+        }
+        documentViewTools.forceMoveTool = false;
+        sceneView.endItemSelection();
+        root.qcIndexVisible = false;
+        root.openDocumentOnPage(src, page);
+    }
+
+    function qcGoToCard(e) {
+        root.qcIndexVisible = false;
+        if (!root.qcIsNotebook()) return;
+        for (let i = 0; i < root.document.pageCount; i++) {
+            if (String(root.document.idForPage(i)) === e.cardPageId) { root.openPage(i); return; }
+        }
+        root.showNotification({ message: "That card was deleted", type: ArkTokens.NotificationBar.secondary });
+    }
+
+    function qcFormatTime(t) {
+        return Qt.formatDateTime(new Date(t), "d MMM yyyy, h:mm ap");
+    }
+
+    function qcIsNotebook() {
+        return !!root.document && String(root.document.id) === Values.qcNotebookId;
+    }
+
+    function qcOnSnippet() {
+        if (!Values.qcArmed || !root.document || root.qcIsNotebook()) return;
+        const r = sceneView.snippetCaptureFeedbackRect;
+        root.qcSource = {
+            id: String(root.document.id),
+            name: String(root.document.visibleName),
+            fileType: root.document.fileType,
+            page: root.currentPage,
+            pageId: String(root.currentPageId),
+            rect: { x: r.x, y: r.y, w: r.width, h: r.height },
+            pageCount: root.document.pageCount,
+            author: root.qcFindAuthor(),
+            time: Date.now()
+        };
+        console.log("QC captured from", root.qcSource.name, "page", root.qcSource.page + 1);
+        root.qcBarVisible = true;
+    }
+
+    function qcCancel() {
+        root.qcBarVisible = false;
+        Values.qcArmed = false;
+    }
+
+    function qcSave(withNote) {
+        root.qcBarVisible = false;
+        Values.qcArmed = false;
+        root.qcWithNote = withNote;
+        const nb = Values.qcNotebookId ? Library.entryForId(Values.qcNotebookId) : null;
+        if (!nb) {
+            root.showNotification({ message: "Quote Cards notebook not set up (see the setup guide)", type: ArkTokens.NotificationBar.secondary });
+            return;
+        }
+        root.qcStep = 1;
+        root.qcTicks = 0;
+        root.qcSettle = 0;
+        root.openDocument(nb);
+        qcTimer.start();
+    }
+
+    function qcFindAuthor() {
+        const d = root.document;
+        let raw = "";
+        let source = "none";
+        const tryVal = (v) => {
+            if (!v) return "";
+            if (typeof v === "string") return v;
+            if (v.length !== undefined && v.length > 0) return String(v[0]) + (v.length > 1 ? " et al." : "");
+            return String(v);
+        };
+        try { raw = tryVal(d.author); if (raw) source = "document.author"; } catch (e) {}
+        if (!raw) { try { raw = tryVal(d.authors); if (raw) source = "document.authors"; } catch (e) {} }
+        if (!raw) {
+            try { const en = Library.entryForId(d.id); raw = tryVal(en.author) || tryVal(en.authors); if (raw) source = "library entry"; } catch (e) {}
+        }
+        if (!raw) {
+            // download-style names: "Title -- Surname, 1926-1977, Other -- ..."
+            const parts = String(d.visibleName).split(" -- ");
+            if (parts.length > 1) { raw = parts[1]; source = "file name"; }
+        }
+        console.log("QC author from", source, ":", raw);
+        return raw;
+    }
+
+    function qcShortAuthor() {
+        let a = (root.qcSource.author || "").trim();
+        if (!a) return "";
+        let etal = "";
+        if (a.endsWith(" et al.")) { etal = " et al."; a = a.slice(0, -7); }
+        a = a.replace(/\[.*$/, "").replace(/;.*$/, "").trim();
+        if (a.indexOf(",") > 0) a = a.split(",")[0].trim();      // "Surname, First" or "Surname, 1900-1980" -> surname
+        else a = a.split(/\s+/).pop();                            // "First Surname" -> "Surname"
+        return a + etal;
+    }
+
+    function qcBookName() {
+        let name = root.qcSource.name;
+        // tidy file-style names like "Title -- Author -- ... .pdf"
+        if (name.indexOf(" -- ") > 0) name = name.split(" -- ")[0];
+        name = name.replace(/\.(pdf|epub)$/i, "").replace(/\s*\(.*?\)\s*$/, "").trim();
+        if (name.indexOf(": ") > 0) name = name.split(": ")[0];   // drop subtitles
+        return name.length > 48 ? name.slice(0, 46) + "…" : name;
+    }
+
+    function qcDetailsText() {
+        const a = root.qcShortAuthor();
+        return root.qcBookName() + (a ? "  —  " + a : "") + "  ·  p. " + (root.qcSource.page + 1)
+             + "  ·  " + root.qcFormatTime(root.qcSource.time);
+    }
+
+    function qcAddDetails() {
+        const text = root.qcDetailsText();
+        try { root.enterTextMode(true); } catch (e0) { console.log("QC enterTextMode failed:", e0); }
+        try {
+            Clipboard.setTextFromString(text);
+            sceneController.pasteText(Clipboard.text, SceneController.KeepStyle, SceneController.MergeWithPreviousAction);
+            console.log("QC label added:", text);
+        } catch (e1) {
+            console.log("QC label failed:", e1);
+        }
+        try { root.exitTextMode(false); } catch (e3) {}
+    }
+
+    function qcWriteLog(card) {
+        root.qcWriteJson(card.cardPageId + ".json", card);
+        const entry = {
+            cardPageId: card.cardPageId,
+            sourceId: card.id,
+            title: root.qcBookName(),
+            author: root.qcShortAuthor(),
+            page: card.page,
+            time: card.time
+        };
+        root.qcIndex = root.qcIndex.concat([entry]);
+        root.qcWriteJson("index.json", root.qcIndex);
+    }
+
+    function qcGoBack() {
+        root.qcBackVisible = false;
+        if (!root.qcSource) return;
+        root.qcOpenSource(root.qcSource.id, root.qcSource.page);
+        Qt.callLater(function () { toolbar.selectPen(Values.qcPrevPen || "primary"); });
+    }
+
+    Timer {
+        id: qcLoader
+        interval: 800
+        running: true
+        repeat: false
+        onTriggered: root.qcLoad()
+    }
+
+    Connections {
+        target: sceneController
+        function onSnippetCopied(items) { Qt.callLater(root.qcOnSnippet); }
+    }
+
+    Timer {
+        id: qcTimer
+        interval: 250
+        repeat: true
+        onTriggered: {
+            root.qcTicks++;
+            if (root.qcTicks > 100) {
+                stop();
+                console.log("QC timed out at step", root.qcStep, "page", root.currentPage, "target", root.qcTarget);
+                root.qcStep = 0;
+                root.showNotification({ message: "Couldn't make the quote card", type: ArkTokens.NotificationBar.secondary });
+                return;
+            }
+            if (root.qcStep === 1) {
+                // Quote Cards is open and idle: add a page at the end
+                if (root.qcIsNotebook() && root.documentLoaded && !root.addingPage && sceneView.status === SceneView.Active) {
+                    root.qcTarget = root.document.pageCount;
+                    root.qcStep = 2;
+                    root.addPage(root.document, root.qcTarget);
+                }
+            } else if (root.qcStep === 2) {
+                // wait until the new page is the one showing, then let it settle
+                const onTarget = root.qcIsNotebook() && !root.addingPage && root.currentPage === root.qcTarget
+                                 && sceneView.status === SceneView.Active;
+                root.qcSettle = onTarget ? root.qcSettle + 1 : 0;
+                if (root.qcSettle >= 3) { root.qcStep = 3; }
+            } else if (root.qcStep === 3) {
+                if (root.currentPage !== root.qcTarget) { root.qcStep = 2; root.qcSettle = 0; return; }
+                const clipH = root.qcSource.rect ? root.qcSource.rect.h : 500;
+                root.performPaste(Qt.point(0, Math.max(600, 260 + clipH / 2)));
+                documentViewTools.forceMoveTool = false;
+                sceneView.endItemSelection();
+                root.qcAddDetails();
+                LibraryController.setPageTags(root.document.id, [root.currentPage], [root.qcBookName()], []);
+                root.qcWriteLog(Object.assign({}, root.qcSource, {
+                    notebookId: Values.qcNotebookId,
+                    cardPage: root.currentPage,
+                    cardPageId: String(root.currentPageId),
+                    savedAt: Date.now()
+                }));
+                console.log("QC card made on page", root.currentPage + 1);
+                root.qcSettle = 0;
+                root.qcStep = 4;
+            } else if (root.qcStep === 4) {
+                // give the page a moment to save before leaving
+                root.qcSettle++;
+                if (root.qcSettle < 4) return;
+                stop();
+                root.qcStep = 0;
+                if (root.qcWithNote) {
+                    root.qcBackVisible = true;
+                    toolbar.selectPen("primary");
+                    Qt.callLater(function () {
+                        const pen = documentViewTools.activePen;
+                        if (pen && (pen.tool === Line.Highlighterv2 || pen.tool === Line.Highlighter) && Line.Ballpointv2 !== undefined)
+                            pen.tool = Line.Ballpointv2;
+                    });
+                } else {
+                    root.qcGoBack();
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: qcBar
+        visible: root.qcBarVisible
+        z: 10000
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: 180
+        width: 900
+        height: 124
+        radius: 14
+        color: "white"
+        border.color: "black"
+        border.width: 3
+        Row {
+            anchors.centerIn: parent
+            spacing: 20
+            Rectangle {
+                width: 220; height: 88; radius: 10; color: "black"
+                Text { anchors.centerIn: parent; text: "Save"; font.pixelSize: 34; color: "white" }
+                MouseArea { anchors.fill: parent; onClicked: root.qcSave(false) }
+            }
+            Rectangle {
+                width: 330; height: 88; radius: 10; color: "black"
+                Text { anchors.centerIn: parent; text: "Save + note"; font.pixelSize: 34; color: "white" }
+                MouseArea { anchors.fill: parent; onClicked: root.qcSave(true) }
+            }
+            Rectangle {
+                width: 240; height: 88; radius: 10; color: "white"; border.color: "black"; border.width: 2
+                Text { anchors.centerIn: parent; text: "Cancel"; font.pixelSize: 34; color: "black" }
+                MouseArea { anchors.fill: parent; onClicked: root.qcCancel() }
+            }
+        }
+    }
+
+    Row {
+        id: qcLinks
+        visible: root.qcIsNotebook() && !root.qcBackVisible && !root.qcIndexVisible
+        z: 10000
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.topMargin: 18
+        anchors.leftMargin: 130
+        spacing: 16
+        Rectangle {
+            width: qcIndexText.implicitWidth + 44; height: 72; radius: 10
+            color: "white"; border.color: "black"; border.width: 2
+            Text { id: qcIndexText; anchors.centerIn: parent; text: "Index"; font.pixelSize: 30; color: "black" }
+            MouseArea { anchors.fill: parent; onClicked: root.qcIndexVisible = true }
+        }
+        Rectangle {
+            visible: !!root.qcCurrentCard
+            width: qcOpenText.implicitWidth + 44; height: 72; radius: 10; color: "black"
+            Text {
+                id: qcOpenText
+                anchors.centerIn: parent
+                color: "white"
+                font.pixelSize: 30
+                text: root.qcCurrentCard ? "Open p. " + (root.qcCurrentCard.page + 1) + " \u2197" : ""
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: root.qcOpenSource(root.qcCurrentCard.sourceId, root.qcCurrentCard.page)
+            }
+        }
+    }
+
+    Rectangle {
+        id: qcIndexPanel
+        visible: root.qcIndexVisible && root.qcIsNotebook()
+        z: 10001
+        anchors.fill: parent
+        anchors.margins: 60
+        anchors.topMargin: 110
+        color: "white"
+        border.color: "black"
+        border.width: 3
+        radius: 14
+        Text {
+            id: qcIndexTitle
+            anchors.left: parent.left; anchors.top: parent.top; anchors.margins: 32
+            text: "Quote index  \u00B7  " + root.qcIndex.length + " cards"
+            font.pixelSize: 38; font.bold: true; color: "black"
+        }
+        Rectangle {
+            anchors.right: parent.right; anchors.top: parent.top; anchors.margins: 24
+            width: 140; height: 72; radius: 10; color: "black"
+            Text { anchors.centerIn: parent; text: "Close"; font.pixelSize: 30; color: "white" }
+            MouseArea { anchors.fill: parent; onClicked: root.qcIndexVisible = false }
+        }
+        ListView {
+            anchors.top: qcIndexTitle.bottom; anchors.topMargin: 28
+            anchors.left: parent.left; anchors.right: parent.right; anchors.bottom: parent.bottom
+            anchors.leftMargin: 32; anchors.rightMargin: 32; anchors.bottomMargin: 24
+            clip: true
+            spacing: 10
+            model: root.qcIndex.slice().reverse()
+            delegate: Rectangle {
+                width: ListView.view.width
+                height: 112
+                color: "white"
+                border.color: "#999999"
+                border.width: 1
+                radius: 8
+                Column {
+                    anchors.left: parent.left; anchors.leftMargin: 20
+                    anchors.right: qcRowButtons.left; anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 6
+                    Text {
+                        width: parent.width; elide: Text.ElideRight
+                        text: modelData.title + (modelData.author ? "  \u2014  " + modelData.author : "")
+                        font.pixelSize: 30; color: "black"
+                    }
+                    Text {
+                        width: parent.width; elide: Text.ElideRight
+                        text: "p. " + (modelData.page + 1) + "  \u00B7  " + root.qcFormatTime(modelData.time)
+                        font.pixelSize: 24; color: "#555555"
+                    }
+                }
+                Row {
+                    id: qcRowButtons
+                    anchors.right: parent.right; anchors.rightMargin: 16
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: 12
+                    Rectangle {
+                        width: 130; height: 72; radius: 10; color: "white"; border.color: "black"; border.width: 2
+                        Text { anchors.centerIn: parent; text: "Card"; font.pixelSize: 28; color: "black" }
+                        MouseArea { anchors.fill: parent; onClicked: root.qcGoToCard(modelData) }
+                    }
+                    Rectangle {
+                        width: 150; height: 72; radius: 10; color: "black"
+                        Text { anchors.centerIn: parent; text: "Book \u2197"; font.pixelSize: 28; color: "white" }
+                        MouseArea { anchors.fill: parent; onClicked: root.qcOpenSource(modelData.sourceId, modelData.page) }
+                    }
+                }
+            }
+        }
+    }
+
+    Rectangle {
+        id: qcBack
+        visible: root.qcBackVisible && root.qcIsNotebook()
+        z: 10000
+        anchors.left: parent.left
+        anchors.top: parent.top
+        anchors.topMargin: 18
+        anchors.leftMargin: 130
+        width: qcBackText.implicitWidth + 48
+        height: 72
+        radius: 10
+        color: "black"
+        Text {
+            id: qcBackText
+            anchors.centerIn: parent
+            color: "white"
+            font.pixelSize: 32
+            text: root.qcSource ? "← Back to p. " + (root.qcSource.page + 1) : "← Back"
+        }
+        MouseArea {
+            anchors.fill: parent
+            onClicked: root.qcGoBack()
+        }
+    }
+}
+END TRAVERSE
+END AFFECT

@@ -1,0 +1,16 @@
+# local only — never published
+local/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+
+# tablet data and firmware-derived files
+*.tar
+*.tar.gz
+hashtab
+*.rm
+xochitl
+quotecards-data/
+config.json
+index.json
